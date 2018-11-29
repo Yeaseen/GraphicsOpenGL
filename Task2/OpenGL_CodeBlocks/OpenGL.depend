@@ -1,0 +1,14 @@
+# depslib dependency file v1.0
+1543484801 source:f:\graphicsopengl\task2\opengl_codeblocks\main.cpp
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<iostream>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\task2\opengl_codeblocks\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
