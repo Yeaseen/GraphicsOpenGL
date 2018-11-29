@@ -28,6 +28,14 @@ int initialState;
 
 int drawCurveState;
 
+int upStateOne;
+int changedCounter;
+double changedX;
+double changedY;
+int upStateOneEffect;
+int upStateTwo;
+
+
 void drawSquare()
 {
     glBegin(GL_QUADS);
@@ -36,6 +44,18 @@ void drawSquare()
         glVertex3d( 3, -3, 0);
         glVertex3d(-3, -3, 0);
         glVertex3d(-3,  3, 0);
+    }
+    glEnd();
+}
+
+void drawBigSquare()
+{
+    glBegin(GL_QUADS);
+    {
+        glVertex3d( 6,  6, 0);
+        glVertex3d( 6, -6, 0);
+        glVertex3d(-6, -6, 0);
+        glVertex3d(-6,  6, 0);
     }
     glEnd();
 }
@@ -110,8 +130,9 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         }
     }
 
-    double t=0,xT=0,yT=0,counter=0;
-    struct point2d pointsOn[20];
+    double t=0,xT=0,yT=0;
+    int counter=0;
+    struct point2d pointsOn[15];
 
     while(t<=1){
 
@@ -125,16 +146,16 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
                 yT=(yT + ansMat[i][1])*t;
             }
         }
-
-
         pointsOn[counter].x = (double)xT;
         pointsOn[counter].y = (double)yT;
         counter++;
+        xT=0;
+        yT=0;
         t=t+0.1;
     }
 
 
-    for(int i=0; i<counter-2 ; i++){
+    for(int i=0; i< counter-1 ; i++){
         glColor3f(1.0, 1.0, 1.0);
         glBegin(GL_LINES);{
 			glVertex3f( pointsOn[i].x, pointsOn[i].y, 0);
@@ -151,7 +172,9 @@ void keyboardListener(unsigned char key, int x,int y){
         case 'g':
             drawaxes=1-drawaxes;
 			break;
-
+        case 'u':
+            upStateOne=1;
+            break;
 		default:
 			break;
 	}
@@ -199,7 +222,37 @@ void mouseListener(int button, int state, int x, int y){	//x, y is the x-y of th
                 cp[cpidx].x = (double)x;
                 cp[cpidx].y = (double)(600 - y);
                 cpidx++;
+                }
 
+                if(upStateOne == 1){
+                    double newx,newy,ans;
+                    int counter;
+                    newx=(double)x;
+                    newy=(double)(600 - y);
+                    counter=0,ans=10000;
+
+                    for(int i=0; i<cpidx ; i++){
+                        double length;
+                        length= sqrt(pow(abs(cp[i].x-newx),2)+pow(abs(cp[i].y-newy),2));
+
+                        if(length < ans){
+                            ans = length;
+                            counter = i;
+                        }
+                    }
+
+                    upStateOneEffect=1;
+                    changedCounter=counter;
+                    changedX=newx;
+                    changedY=newy;
+                    upStateOne=0;
+                    upStateTwo=1;
+                }
+                else if(upStateTwo == 1){
+                    upStateOneEffect=0;
+                    cp[changedCounter].x=changedX;
+                    cp[changedCounter].y=changedY;
+                    upStateTwo=0;
                 }
 			}
 			break;
@@ -261,24 +314,37 @@ void display(){
 
     for (i = 0; i < cpidx; i++)
     {
-
         glPushMatrix();
         {   if(i%2 !=0){
               drawAxes(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y);
               if(drawCurveState ==1){
-              //if()
-              //drawCurve(cp[i-1].x, cp[i-1].y, cp[i+1].y, cp[i+1].y,cp[i].y,cp[i].y,cp[i+2].y,cp[i+2].y);
-               drawHermitCurve(cp[0].x, cp[0].y, cp[2].y, cp[2].y,cp[1].y,cp[1].y,cp[3].y,cp[3].y);
+               if(i+1>=cpidx){
+                drawHermitCurve(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y,cp[0].x,cp[0].y,cp[1].x,cp[1].y);
+               }
+               else{
+                drawHermitCurve(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y,cp[i+1].x,cp[i+1].y,cp[i+2].x,cp[i+2].y);
+               }
               }
-
-
-
         }
-        glColor3f(1, 1, 0);
+
+            glColor3f(1, 1, 0);
             glTranslatef(cp[i].x, cp[i].y, 0);
             drawSquare();
         }
         glPopMatrix();
+
+    }
+
+    if(upStateOneEffect==1){
+            glPushMatrix();
+            {
+                glColor3f(0, 1, 0);
+            glTranslatef(cp[changedCounter].x, cp[changedCounter].y, 0);
+            drawBigSquare();
+
+            }
+            glPopMatrix();
+
     }
 
     //cout<<"Hello"<<endl;
@@ -325,6 +391,8 @@ void init(){
 	drawaxes=1;
 	initialState=1;
 	drawCurveState=0;
+	upStateOne=0;
+	upStateTwo=0;
 }
 
 int main(int argc, char **argv){

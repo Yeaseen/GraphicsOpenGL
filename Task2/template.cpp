@@ -14,6 +14,7 @@ struct point2d
 };
 
 struct point2d cp[200];
+
 int cpidx;
 
 void drawSquare()
