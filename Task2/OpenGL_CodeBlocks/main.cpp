@@ -36,6 +36,8 @@ int upStateOneEffect;
 int upStateTwo;
 
 
+
+
 void drawSquare()
 {
     glBegin(GL_QUADS);
@@ -67,12 +69,13 @@ void drawPointer(int rad)
 		glColor3f(1.0, 1.0, 1.0);
 		glBegin(GL_LINES);{
 			glVertex3f( 0,0,0);
-			glVertex3f( rad,0,0);
+			glVertex3f( rad-(rad/4),0,0);
 
 			}glEnd();
 
 		glBegin(GL_TRIANGLES);
         {
+            glColor3f(1.0, 0, 0);
             glVertex3f(rad,0,0);
 			glVertex3f(rad-(rad/4),4,0);
 			glVertex3f(rad-(rad/4),-4,0);
@@ -100,6 +103,7 @@ void drawAxes(double startX,double startY,double endX,double endY)
     drawPointer(adj);
     }
     glPopMatrix();
+
 
 	}
 }
@@ -130,12 +134,17 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         }
     }
 
-    double t=0,xT=0,yT=0;
+
     int counter=0;
-    struct point2d pointsOn[15];
+    struct point2d pointsOn[30];
 
+
+    /*
+
+    //Curve rendering: BRUTE FORCE METHOD
+    double t=0;
     while(t<=1){
-
+        double xT=0,yT=0;
         for(int i=0; i<4; i++){
             if(i==3){
                 xT=xT+ansMat[i][0];
@@ -153,8 +162,39 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         yT=0;
         t=t+0.1;
     }
+    */
+     //forward differencing method for rendering curve points
+     int t=20;
+     double space=0.05;
+     double fx,fy,f1x,f2x,f3x,f1y,f2y,f3y;
+     fx=ansMat[3][0];
+     fy=ansMat[3][1];
 
+     f1x= ansMat[0][0]*pow(space,3)+ ansMat[1][0]*pow(space,2)+ansMat[2][0]*space;
+     f2x=6*ansMat[0][0]*pow(space,3)+ 2*ansMat[1][0]*pow(space,2);
+     f3x=6*ansMat[0][0]*pow(space,3);
 
+     f1y= ansMat[0][1]*pow(space,3)+ ansMat[1][1]*pow(space,2)+ansMat[2][1]*space;
+     f2y=6*ansMat[0][1]*pow(space,3)+ 2*ansMat[1][1]*pow(space,2);
+     f3y=6*ansMat[0][1]*pow(space,3);
+
+     pointsOn[counter].x = (double)fx;
+     pointsOn[counter].y = (double)fy;
+     counter++;
+
+     for(int i=0; i<t; i++){
+        fx+=f1x;
+        f1x+=f2x;
+        f2x+=f3x;
+
+        fy+=f1y;
+        f1y+=f2y;
+        f2y+=f3y;
+        pointsOn[counter].x = (double)fx;
+        pointsOn[counter].y = (double)fy;
+        counter++;
+
+     }
     for(int i=0; i< counter-1 ; i++){
         glColor3f(1.0, 1.0, 1.0);
         glBegin(GL_LINES);{
@@ -324,12 +364,15 @@ void display(){
                else{
                 drawHermitCurve(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y,cp[i+1].x,cp[i+1].y,cp[i+2].x,cp[i+2].y);
                }
-              }
-        }
 
+              }
+            }
+            if(drawaxes==1){
             glColor3f(1, 1, 0);
             glTranslatef(cp[i].x, cp[i].y, 0);
             drawSquare();
+            }
+
         }
         glPopMatrix();
 
@@ -338,7 +381,7 @@ void display(){
     if(upStateOneEffect==1){
             glPushMatrix();
             {
-                glColor3f(0, 1, 0);
+            glColor3f(1, 1, 0);
             glTranslatef(cp[changedCounter].x, cp[changedCounter].y, 0);
             drawBigSquare();
 
