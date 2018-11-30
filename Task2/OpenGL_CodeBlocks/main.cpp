@@ -35,8 +35,12 @@ double changedY;
 int upStateOneEffect;
 int upStateTwo;
 
+int midx;
+struct point2d pointsOn[600];
 
 
+int animateState;
+int animCounter;
 
 void drawSquare()
 {
@@ -135,8 +139,7 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
     }
 
 
-    int counter=0;
-    struct point2d pointsOn[30];
+
 
 
     /*
@@ -163,6 +166,8 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         t=t+0.1;
     }
     */
+
+
      //forward differencing method for rendering curve points
      int t=20;
      double space=0.05;
@@ -178,9 +183,9 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
      f2y=6*ansMat[0][1]*pow(space,3)+ 2*ansMat[1][1]*pow(space,2);
      f3y=6*ansMat[0][1]*pow(space,3);
 
-     pointsOn[counter].x = (double)fx;
-     pointsOn[counter].y = (double)fy;
-     counter++;
+     pointsOn[midx].x = (double)fx;
+     pointsOn[midx].y = (double)fy;
+     midx++;
 
      for(int i=0; i<t; i++){
         fx+=f1x;
@@ -190,18 +195,12 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         fy+=f1y;
         f1y+=f2y;
         f2y+=f3y;
-        pointsOn[counter].x = (double)fx;
-        pointsOn[counter].y = (double)fy;
-        counter++;
+        pointsOn[midx].x = (double)fx;
+        pointsOn[midx].y = (double)fy;
+        midx++;
 
      }
-    for(int i=0; i< counter-1 ; i++){
-        glColor3f(1.0, 1.0, 1.0);
-        glBegin(GL_LINES);{
-			glVertex3f( pointsOn[i].x, pointsOn[i].y, 0);
-			glVertex3f( pointsOn[i+1].x, pointsOn[i+1].y, 0);
-		}glEnd();
-    }
+
 
 }
 
@@ -214,6 +213,10 @@ void keyboardListener(unsigned char key, int x,int y){
 			break;
         case 'u':
             upStateOne=1;
+            break;
+		case 'a':
+            animateState=1-animateState;
+            animCounter=0;
             break;
 		default:
 			break;
@@ -365,6 +368,7 @@ void display(){
                 drawHermitCurve(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y,cp[i+1].x,cp[i+1].y,cp[i+2].x,cp[i+2].y);
                }
 
+
               }
             }
             if(drawaxes==1){
@@ -378,6 +382,36 @@ void display(){
 
     }
 
+    if(drawCurveState == 1){
+
+
+          for(int i=0; i< midx-1 ; i++){
+                    glColor3f(1.0, 1.0, 1.0);
+                    glBegin(GL_LINES);{
+                    glVertex3f( pointsOn[i].x, pointsOn[i].y, 0);
+                    glVertex3f( pointsOn[i+1].x, pointsOn[i+1].y, 0);
+		}glEnd();
+    }
+
+
+
+
+    }
+
+    if(animateState ==1){
+        glPushMatrix();
+            {
+            glColor3f(0, 1, 1);
+            if(animCounter >=midx){
+                animCounter=0;
+            }
+            glTranslatef(pointsOn[animCounter].x, pointsOn[animCounter].y, 0);
+            drawBigSquare();
+
+            }
+            glPopMatrix();
+    }
+
     if(upStateOneEffect==1){
             glPushMatrix();
             {
@@ -389,7 +423,7 @@ void display(){
             glPopMatrix();
 
     }
-
+    midx=0;
     //cout<<"Hello"<<endl;
 
 	//ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
@@ -399,7 +433,12 @@ void display(){
 
 void animate(){
 
-
+    if(animateState == 1){
+        animCounter++;
+        //if(animCounter >= midx){
+        //    animCounter=0;
+        //}
+    }
 	//codes for any changes in Models, Camera
 	glutPostRedisplay();
 }
@@ -436,6 +475,10 @@ void init(){
 	drawCurveState=0;
 	upStateOne=0;
 	upStateTwo=0;
+	midx=0;
+
+	animCounter=0;
+
 }
 
 int main(int argc, char **argv){
