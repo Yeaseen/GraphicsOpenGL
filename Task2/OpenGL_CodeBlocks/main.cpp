@@ -41,7 +41,10 @@ int upStateTwo;
 int midx;
 struct point2d pointsOn[1000];
 
-
+struct point2d pointsUp[1000];
+int upidx;
+struct point2d pointsDown[1000];
+int downidx;
 int animateState;
 int animCounter;
 
@@ -232,6 +235,26 @@ void drawHermitCurve(int p0x,int p0y,int p1x,int p1y,int p2x,int p2y,int p3x,int
         f2y+=f3y;
         pointsOn[midx].x = (double)fx;
         pointsOn[midx].y = (double)fy;
+        double vectx=pointsOn[midx].x -pointsOn[midx-1].x;
+        double vecty=pointsOn[midx].y -pointsOn[midx-1].y;
+        double upx=-vecty;
+        double upy=vectx;
+        double mag= sqrt((upx*upx)+(upy*upy));
+        upx=(double)upx/mag;
+        upy=(double)upy/mag;
+        upx=upx*10;
+        upy=upy*10;
+
+        pointsUp[upidx].x=pointsOn[midx].x+upx;
+        pointsUp[upidx].y=pointsOn[midx].y+upy;
+        upidx++;
+
+        upx=upx*(-1);
+        upy=upy*(-1);
+        pointsDown[downidx].x=pointsOn[midx].x+upx;
+        pointsDown[downidx].y=pointsOn[midx].y+upy;
+        downidx++;
+
         midx++;
 
      }
@@ -404,6 +427,8 @@ void display(){
                }
                else{
                 drawHermitCurve(cp[i-1].x, cp[i-1].y, cp[i].x, cp[i].y,cp[i+1].x,cp[i+1].y,cp[i+2].x,cp[i+2].y);
+
+
                }
 
 
@@ -420,17 +445,45 @@ void display(){
 
     }
 
+
+
+
     if(drawCurveState == 1){
 
 
           for(int i=0; i< midx-1 ; i++){
                 glPushMatrix();
                 {
-                    glColor3f(1.0, 1.0, 1.0);
+
                     glLineWidth(2);
                     glBegin(GL_LINES);{
+                    glColor3f(1,1,1);
                     glVertex3f( pointsOn[i].x, pointsOn[i].y, 0);
                     glVertex3f( pointsOn[i+1].x, pointsOn[i+1].y, 0);
+
+                    if(i<upidx-1){
+                    glColor3f(0, 1,0);
+                    glVertex3f( pointsUp[i].x, pointsUp[i].y, 0);
+                    glVertex3f( pointsUp[i+1].x, pointsUp[i+1].y, 0);
+
+
+                    //glColor3f(0,0,1);
+                    glVertex3f( pointsDown[i].x, pointsDown[i].y, 0);
+                    glVertex3f( pointsDown[i+1].x, pointsDown[i+1].y, 0);
+
+                    }
+
+
+                    if(i%10==0){
+                    glColor3f(1,1,1);
+                    glVertex3f( pointsUp[i].x, pointsUp[i].y, 0);
+                    glVertex3f( pointsDown[i].x, pointsDown[i].y, 0);
+                    }
+
+
+
+
+
 		}glEnd();
                 }
                 glPopMatrix();
@@ -467,6 +520,8 @@ void display(){
 
     }
     midx=0;
+    upidx=0;
+    downidx=0;
     //cout<<"Hello"<<endl;
 
 	//ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
@@ -518,8 +573,9 @@ void init(){
 	drawCurveState=0;
 	upStateOne=0;
 	upStateTwo=0;
-	midx=0;
-
+    midx=0;
+    upidx=0;
+    downidx=0;
 	animCounter=0;
 
 }
