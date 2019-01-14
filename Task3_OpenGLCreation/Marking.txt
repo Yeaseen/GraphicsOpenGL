@@ -1,0 +1,8 @@
+Managing push and pop - 	10
+Translation - 			5
+Scaling - 			5
+Rotation - 			15
+View transformation - 		10
+Clipping - 			20
+Projection transformation - 	10
+Scan conversion - 		25
