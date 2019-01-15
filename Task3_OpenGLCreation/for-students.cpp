@@ -354,8 +354,21 @@ void scan_convert() {
 }
 
 
+
+
+homogeneous_point intersect(homogeneous_point p3,homogeneous_point p2, double z){
+    homogeneous_point ans;
+    ans.w=1;
+    ans.z=z;
+    ans.x=p2.x + ((p3.x-p2.x)/(p3.z-p2.z))*(z-p2.z);
+    ans.y=p2.y + ((p3.y-p2.y)/(p3.z-p2.z))*(z-p2.z);
+    //ans.print();
+    return ans;
+}
+
 void stage3()
 {
+    //cout<<"ok"<<endl;
     if (near == far) return;
     ifstream stage2;
     ofstream stage3;
@@ -363,6 +376,308 @@ void stage3()
     stage3.open ("stage3.txt");
     stage3 << std::fixed;
     stage3 << std::setprecision(7);
+
+    fov_y=fov_y*(pi/180);
+    fov_x=fov_y * aspectRatio;
+    double t= near * tan(fov_y/2);
+    double r=near * tan(fov_x/2);
+
+
+
+    matrix projectMat(4);
+
+    projectMat.values[0][0]=near/r;
+    projectMat.values[0][1]=0;
+    projectMat.values[0][2]=0;
+    projectMat.values[0][3]=0;
+
+    projectMat.values[1][0]=0;
+    projectMat.values[1][1]=near/t;
+    projectMat.values[1][2]=0;
+    projectMat.values[1][3]=0;
+
+    projectMat.values[2][0]=0;
+    projectMat.values[2][1]=0;
+    projectMat.values[2][2]=-((far + near)/(far - near));
+    projectMat.values[2][3]=-((2 * far * near)/(far - near));
+
+    projectMat.values[3][0]=0;
+    projectMat.values[3][1]=0;
+    projectMat.values[3][2]=-1;
+    projectMat.values[3][3]=0;
+
+
+    //projectMat.print();
+
+    double NEAR=-1;
+    double FAR=-100;
+    homogeneous_point s2p;
+    int cnt=1;
+    homogeneous_point Points[3];
+    while(stage2>> s2p.x >> s2p.y >> s2p.z){
+        s2p.w=1;
+        //s2p.print();
+        Points[cnt-1]=s2p;
+        //homogeneous_point projP=projectMat*s2p;
+        //stage3 << projP.x <<" "<<projP.y <<" "<<projP.z<<endl;
+        if((cnt%3)==0){
+
+
+
+            //case 1
+            if((Points[0].z>=FAR && Points[0].z<= NEAR) && (Points[1].z>=FAR && Points[1].z<= NEAR)
+               && (Points[2].z>=FAR && Points[2].z<= NEAR)){
+                cout<<"T"<<endl;
+                for(int i=0;i<3;i++){
+                    homogeneous_point projP=projectMat*Points[i];
+                    stage3 << projP.x <<" "<<projP.y <<" "<<projP.z<<endl;
+                }
+                stage3<<endl;
+                cnt=0;
+            }
+
+            //case 2
+            else if((Points[0].z>NEAR || Points[0].z<FAR) && (Points[1].z>=FAR && Points[1].z<=NEAR)
+               && (Points[2].z>=FAR && Points[2].z<=NEAR)){
+                //cout<< "nice"<<endl;
+                double z;
+                if( (Points[0].z>NEAR) && (Points[1].z==NEAR ) &&(Points[2].z==NEAR)){
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[0].z>NEAR) && (Points[1].z<NEAR ) &&(Points[2].z<NEAR)) {
+                    z=NEAR;
+                }
+                else if((Points[0].z<FAR) && (Points[1].z==FAR ) &&(Points[2].z==FAR)){
+                  //z=NEAR;
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[0].z<FAR) && (Points[1].z>FAR ) &&(Points[2].z>FAR)) {
+                    z=FAR;
+                }
+
+
+                homogeneous_point p=intersect(Points[0],Points[1],z);
+                p=projectMat*p;
+                //p.print();
+
+
+                homogeneous_point q=intersect(Points[0],Points[2],z);
+                q=projectMat*q;
+                //q.print();
+                Points[1]=projectMat*Points[1];
+                Points[2]=projectMat*Points[2];
+
+                stage3 << Points[1].x<<" "<<Points[1].y<<" "<<Points[1].z<<endl;
+                stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+
+                stage3 <<endl;
+
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
+
+                stage3 << endl;
+                cnt=0;
+
+            }
+
+            else if((Points[1].z>NEAR || Points[1].z<FAR) && (Points[0].z>=FAR && Points[0].z<=NEAR)
+               && (Points[2].z>=FAR && Points[2].z<=NEAR)){
+                //cout<< "nice"<<endl;
+                double z;
+                if( (Points[1].z>NEAR) && (Points[0].z==NEAR ) &&(Points[2].z==NEAR)){
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[1].z>NEAR) && (Points[0].z<NEAR ) &&(Points[2].z<NEAR)) {
+                    z=NEAR;
+                }
+                else if((Points[1].z<FAR) && (Points[0].z==FAR ) &&(Points[2].z==FAR)){
+                  //z=NEAR;
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[1].z<FAR) && (Points[0].z>FAR ) &&(Points[2].z>FAR)) {
+                    z=FAR;
+                }
+
+                homogeneous_point p=intersect(Points[1],Points[0],z);
+                p=projectMat*p;
+                //p.print();
+
+
+                homogeneous_point q=intersect(Points[1],Points[2],z);
+                q=projectMat*q;
+                //q.print();
+                Points[0]=projectMat*Points[0];
+                Points[2]=projectMat*Points[2];
+
+                stage3 << Points[0].x<<" "<<Points[0].y<<" "<<Points[0].z<<endl;
+                stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+
+                stage3 <<endl;
+
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
+
+                stage3 << endl;
+                cnt=0;
+
+            }
+            else if((Points[2].z>NEAR || Points[2].z<FAR) && (Points[0].z>=FAR && Points[0].z<=NEAR)
+               && (Points[1].z>=FAR && Points[1].z<=NEAR)){
+                //cout<< "nice"<<endl;
+                double z;
+                if( (Points[2].z>NEAR) && (Points[0].z==NEAR ) &&(Points[1].z==NEAR)){
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[2].z>NEAR) && (Points[0].z<NEAR ) &&(Points[1].z<NEAR)) {
+                    z=NEAR;
+                }
+                else if((Points[2].z<FAR) && (Points[0].z==FAR ) &&(Points[1].z==FAR)){
+                  //z=NEAR;
+                  cnt=0;
+                  continue;
+                }
+                else if((Points[2].z<FAR) && (Points[0].z>FAR ) &&(Points[1].z>FAR)) {
+                    z=FAR;
+                }
+
+
+                homogeneous_point p=intersect(Points[2],Points[0],z);
+                p=projectMat*p;
+                //p.print();
+
+
+                homogeneous_point q=intersect(Points[2],Points[1],z);
+                q=projectMat*q;
+                //q.print();
+                Points[0]=projectMat*Points[0];
+                Points[1]=projectMat*Points[1];
+
+                stage3 << Points[0].x<<" "<<Points[0].y<<" "<<Points[0].z<<endl;
+                stage3 << Points[1].x<<" "<<Points[1].y<<" "<<Points[1].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+
+                stage3 <<endl;
+
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                stage3 << Points[1].x<<" "<<Points[1].y<<" "<<Points[1].z<<endl;
+
+                stage3 << endl;
+                cnt=0;
+            }
+
+
+            //case 3
+            else if((Points[0].z<=FAR && Points[1].z<=FAR && Points[2].z<=FAR)
+                    ||(Points[0].z >=NEAR && Points[1].z>=NEAR && Points[2].z>=NEAR)){
+                    cnt=0;
+                    continue;
+            }
+
+            //case 4
+            else if((Points[0].z>FAR && Points[0].z<NEAR)&&((Points[1].z>NEAR && Points[2].z>NEAR)
+                    || (Points[1].z<FAR && Points[2].z<FAR) )){
+                double z;
+                if(Points[1].z>NEAR && Points[2].z>NEAR){
+                    z=NEAR;
+                }
+                else if(Points[1].z<FAR && Points[2].z<FAR){
+                  z=FAR;
+                }
+
+                homogeneous_point p=intersect(Points[1],Points[0],z);
+                homogeneous_point q=intersect(Points[2],Points[0],z);
+
+                p=projectMat*p;
+                q=projectMat*q;
+                Points[0]=projectMat*Points[0];
+
+                stage3 << Points[0].x<<" "<<Points[0].y<<" "<<Points[0].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+
+
+                stage3 << endl;
+                cnt=0;
+            }
+
+            else if((Points[1].z>FAR && Points[1].z<NEAR)&&((Points[0].z>NEAR && Points[2].z>NEAR)
+                    || (Points[0].z<FAR && Points[2].z<FAR) )){
+                double z;
+                if(Points[0].z>NEAR && Points[2].z>NEAR){
+                    z=NEAR;
+                }
+                else if(Points[0].z<FAR && Points[2].z<FAR){
+                  z=FAR;
+                }
+
+                homogeneous_point p=intersect(Points[0],Points[1],z);
+                homogeneous_point q=intersect(Points[2],Points[1],z);
+
+                p=projectMat*p;
+                q=projectMat*q;
+                Points[1]=projectMat*Points[1];
+
+                stage3 << Points[1].x<<" "<<Points[1].y<<" "<<Points[1].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+
+
+                stage3 << endl;
+                cnt=0;
+            }
+
+            else if((Points[2].z>FAR && Points[2].z<NEAR)&&((Points[0].z>NEAR && Points[1].z>NEAR)
+                    || (Points[0].z<FAR && Points[1].z<FAR) )){
+                double z;
+                if(Points[0].z>NEAR && Points[1].z>NEAR){
+                    z=NEAR;
+                }
+                else if(Points[0].z<FAR && Points[1].z<FAR){
+                  z=FAR;
+                }
+
+                homogeneous_point p=intersect(Points[0],Points[2],z);
+                homogeneous_point q=intersect(Points[1],Points[2],z);
+
+                p=projectMat*p;
+                q=projectMat*q;
+                Points[2]=projectMat*Points[2];
+
+                stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
+                stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+
+
+                stage3 << endl;
+                cnt=0;
+            }
+
+            //case 5 due
+
+
+
+
+
+
+        }
+
+
+        cnt++;
+
+
+    }
+
+
 
     // process input from stage2 and write to stage3
 
@@ -560,7 +875,7 @@ int main()
 
     stage1();
     stage2();
-    //stage3();
+    stage3();
     //scan_convert();
 
     return 0;
