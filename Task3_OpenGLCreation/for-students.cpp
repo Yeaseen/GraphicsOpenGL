@@ -307,6 +307,11 @@ public:
     }
     color() {
     }
+
+    void print(){
+        cout<<"Color:"<<endl;
+        cout<<r<<" "<<g<<" "<<b<<endl;
+    }
 };
 
 
@@ -317,12 +322,19 @@ double fov_x, fov_y, aspectRatio, near, far;
 color backgroud;
 int screen_x, screen_y;
 
+vector<color> clrs;
+vector<color> finalclrs;
 
+bool comp(const homogeneous_point& lhs, const homogeneous_point& rhs)
+{
+  return lhs.y > rhs.y;
+}
 
 void scan_convert() {
     ifstream stage3;
     stage3.open("stage3.txt");
-
+    cout<<clrs.size()<<endl;
+    cout<<finalclrs.size()<<endl;
     color** pixels = new color*[screen_x];
     double** zs = new double*[screen_x];
     for (int i = 0; i < screen_x; i++) {
@@ -338,6 +350,51 @@ void scan_convert() {
 
     // perform scan conversion, populate the 2D array pixels
     // the array zs is the z-buffer.
+
+    homogeneous_point s3p;
+
+    int cnt=1;
+    homogeneous_point Points[3];
+    int ic=0;
+    while(stage3 >> s3p.x >> s3p.y >> s3p.z){
+        s3p.w=1;
+        Points[cnt-1]=s3p;
+
+        if(cnt%3==0){
+
+
+            std::sort(std::begin(Points), std::end(Points), comp);
+            for(int i=0;i<3;i++){
+
+                    double maxY=Points[i].y;
+                    maxY=(maxY+1)*(screen_y/2);
+
+                    double maxX=Points[i].x;
+                    maxX=(maxX+1)*(screen_x/2);
+
+                    cout<<maxX<<" "<<maxY<<endl;
+
+
+                    pixels[(int)maxX][screen_y-(int)maxY]=finalclrs[ic];
+
+            }
+                cout<<endl;
+
+
+            //double minY=Points[2].y;
+            //minY=(minY+1)*(screen_y/2);
+            //cout <<"maxY= "<<maxY<< " MinY= "<<minY<<endl;
+
+
+
+
+
+            cnt=0;
+            ic++;
+        }
+
+        cnt++;
+    }
 
 
     // the following code generates a bmp image. do not change this.
@@ -408,12 +465,14 @@ void stage3()
 
 
     //projectMat.print();
-
-    double NEAR=-1;
-    double FAR=-100;
+    //cout<<clrs.size()<<endl;
+    //cout<<finalclrs.size()<<endl;
+    double NEAR=-near;
+    double FAR=-far;
     homogeneous_point s2p;
     int cnt=1;
     homogeneous_point Points[3];
+    int ic=0;
     while(stage2>> s2p.x >> s2p.y >> s2p.z){
         s2p.w=1;
         //s2p.print();
@@ -434,6 +493,14 @@ void stage3()
                 }
                 stage3<<endl;
                 cnt=0;
+
+                //clrs[ic].print();
+                finalclrs.push_back(clrs[ic]);
+                //finalclrs[ic].print();
+
+
+
+                ic++;
             }
 
             //case 2
@@ -475,12 +542,20 @@ void stage3()
 
                 stage3 <<endl;
 
+                finalclrs.push_back(clrs[ic]);
+
                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                 stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
 
                 stage3 << endl;
+
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+
+
+
+                ic++;
 
             }
 
@@ -521,12 +596,17 @@ void stage3()
 
                 stage3 <<endl;
 
+                finalclrs.push_back(clrs[ic]);
+
                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                 stage3 << Points[2].x<<" "<<Points[2].y<<" "<<Points[2].z<<endl;
 
                 stage3 << endl;
+
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+                ic++;
 
             }
             else if((Points[2].z>NEAR || Points[2].z<FAR) && (Points[0].z>=FAR && Points[0].z<=NEAR)
@@ -567,12 +647,18 @@ void stage3()
 
                 stage3 <<endl;
 
+                finalclrs.push_back(clrs[ic]);
+
                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                 stage3 << Points[1].x<<" "<<Points[1].y<<" "<<Points[1].z<<endl;
 
                 stage3 << endl;
+
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+
+                ic++;
             }
 
 
@@ -607,7 +693,10 @@ void stage3()
 
 
                 stage3 << endl;
+
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+                ic++;
             }
 
             else if((Points[1].z>FAR && Points[1].z<NEAR)&&((Points[0].z>NEAR && Points[2].z>NEAR)
@@ -633,7 +722,9 @@ void stage3()
 
 
                 stage3 << endl;
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+                ic++;
             }
 
             else if((Points[2].z>FAR && Points[2].z<NEAR)&&((Points[0].z>NEAR && Points[1].z>NEAR)
@@ -659,7 +750,9 @@ void stage3()
 
 
                 stage3 << endl;
+                finalclrs.push_back(clrs[ic]);
                 cnt=0;
+                ic++;
             }
 
             //case 5 due
@@ -705,18 +798,23 @@ void stage3()
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3<<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
                  stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
+                 cnt=0;
+                 ic++;
 
             }
 
@@ -761,18 +859,23 @@ void stage3()
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3<<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
                  stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
+                 cnt=0;
+                 ic++;
 
             }
             else if((Points[2].z>FAR && Points[2].z<NEAR) && ((Points[1].z<FAR && Points[0].z>NEAR)
@@ -816,18 +919,23 @@ void stage3()
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3<<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
 
                  stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
                  stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
                  stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
 
                  stage3 <<endl;
+                 finalclrs.push_back(clrs[ic]);
+                 cnt=0;
+                 ic++;
 
             }
 
@@ -938,7 +1046,7 @@ void stage1()
     s.push(Mi.make_identity(4));
     while(true){
         scene >> command;
-        cout << command<<endl;
+        //cout << command<<endl;
         if(command == "triangle"){
             for(int i=0;i<3;i++){
             homogeneous_point pp;
@@ -953,6 +1061,8 @@ void stage1()
             color trclr;
             scene >> trclr.r >> trclr.g >> trclr.b;
             //stage1 << trclr.r<<" " << trclr.g<< " " << trclr.b<<endl;
+            clrs.push_back(trclr);
+
             stage1 <<endl;
         }
         else if(command == "push"){
@@ -967,9 +1077,9 @@ void stage1()
             Vector rotateAxis(0,0,0);
             scene >> angle >> rotateAxis.x >> rotateAxis.y >> rotateAxis.z;
             angle= angle*(pi/180);
-            cout<<angle<<endl;
+           //cout<<angle<<endl;
             rotateAxis.normalize();
-            rotateAxis.print();
+            //rotateAxis.print();
             Vector i(1,0,0), j(0,1,0), k(0,0,1);
             Vector c1= R(i, rotateAxis,angle);
             Vector c2= R(j, rotateAxis, angle);
@@ -1038,7 +1148,7 @@ int main()
     stage1();
     stage2();
     stage3();
-    //scan_convert();
+    scan_convert();
 
     return 0;
 }
