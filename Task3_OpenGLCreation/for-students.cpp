@@ -427,7 +427,7 @@ void stage3()
             //case 1
             if((Points[0].z>=FAR && Points[0].z<= NEAR) && (Points[1].z>=FAR && Points[1].z<= NEAR)
                && (Points[2].z>=FAR && Points[2].z<= NEAR)){
-                cout<<"T"<<endl;
+                //cout<<"T"<<endl;
                 for(int i=0;i<3;i++){
                     homogeneous_point projP=projectMat*Points[i];
                     stage3 << projP.x <<" "<<projP.y <<" "<<projP.z<<endl;
@@ -664,10 +664,172 @@ void stage3()
 
             //case 5 due
 
+            else if((Points[0].z>FAR && Points[0].z<NEAR) && ((Points[1].z<FAR && Points[2].z>NEAR)
+                || (Points[1].z>NEAR && Points[2].z <FAR) )){
+                 //cout<< "Find"<<endl;
 
+                 double z2,z3;
+                 homogeneous_point x1=Points[0];
+                 x1.w=1;
+                 homogeneous_point x2,x3;
+                 x2.w=1;
+                 x3.w=1;
+                 z2=FAR;
+                 z3=NEAR;
+                 if(Points[1].z<FAR){
+                    x2=Points[1];
+                    x3=Points[2];
+                   // cout<<"1 is in FAR"<<endl;
+                 }
+                 else{
+                    x2=Points[2];
+                    x3=Points[1];
+                    //cout<<"2 is in FAR"<<endl;
 
+                 }
 
+                 homogeneous_point p=intersect(x2,x1,z2);
+                 homogeneous_point q=intersect(x2,x3,z2);
 
+                 homogeneous_point r=intersect(x3,x1,z3);
+                 homogeneous_point s=intersect(x2,x3,z3);
+
+                 x1=projectMat*x1;
+                 p=projectMat*p;
+                 q=projectMat*q;
+                 r=projectMat*r;
+                 s=projectMat*s;
+
+                 stage3 << x1.x <<" "<<x1.y <<" "<<x1.z<<endl;
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3<<endl;
+
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3 <<endl;
+
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+                 stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
+
+                 stage3 <<endl;
+
+            }
+
+            else if((Points[1].z>FAR && Points[1].z<NEAR) && ((Points[0].z<FAR && Points[2].z>NEAR)
+                || (Points[0].z>NEAR && Points[2].z <FAR) )){
+                 //cout<< "Find"<<endl;
+
+                 double z2,z3;
+                 homogeneous_point x1=Points[1];
+                 x1.w=1;
+                 homogeneous_point x2,x3;
+                 x2.w=1;
+                 x3.w=1;
+                 z2=FAR;
+                 z3=NEAR;
+                 if(Points[0].z<FAR){
+                    x2=Points[0];
+                    x3=Points[2];
+                   // cout<<"0 is in FAR"<<endl;
+                 }
+                 else{
+                    x2=Points[2];
+                    x3=Points[0];
+                   // cout<<"2bc is in FAR"<<endl;
+
+                 }
+
+                 homogeneous_point p=intersect(x2,x1,z2);
+                 homogeneous_point q=intersect(x2,x3,z2);
+
+                 homogeneous_point r=intersect(x3,x1,z3);
+                 homogeneous_point s=intersect(x2,x3,z3);
+
+                 x1=projectMat*x1;
+                 p=projectMat*p;
+                 q=projectMat*q;
+                 r=projectMat*r;
+                 s=projectMat*s;
+
+                 stage3 << x1.x <<" "<<x1.y <<" "<<x1.z<<endl;
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3<<endl;
+
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3 <<endl;
+
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+                 stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
+
+                 stage3 <<endl;
+
+            }
+            else if((Points[2].z>FAR && Points[2].z<NEAR) && ((Points[1].z<FAR && Points[0].z>NEAR)
+                || (Points[1].z>NEAR && Points[0].z <FAR) )){
+                 //cout<< "Find"<<endl;
+
+                 double z2,z3;
+                 homogeneous_point x1=Points[2];
+                 x1.w=1;
+                 homogeneous_point x2,x3;
+                 x2.w=1;
+                 x3.w=1;
+                 z2=FAR;
+                 z3=NEAR;
+                 if(Points[0].z<FAR){
+                    x2=Points[0];
+                    x3=Points[1];
+                   // cout<<"1 is in FAR"<<endl;
+                 }
+                 else{
+                    x2=Points[1];
+                    x3=Points[0];
+                   // cout<<"2 is in FAR"<<endl;
+
+                 }
+
+                 homogeneous_point p=intersect(x2,x1,z2);
+                 homogeneous_point q=intersect(x2,x3,z2);
+
+                 homogeneous_point r=intersect(x3,x1,z3);
+                 homogeneous_point s=intersect(x2,x3,z3);
+
+                 x1=projectMat*x1;
+                 p=projectMat*p;
+                 q=projectMat*q;
+                 r=projectMat*r;
+                 s=projectMat*s;
+
+                 stage3 << x1.x <<" "<<x1.y <<" "<<x1.z<<endl;
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3<<endl;
+
+                 stage3 << p.x <<" "<<p.y <<" "<<p.z<<endl;
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+
+                 stage3 <<endl;
+
+                 stage3 << q.x <<" "<<q.y <<" "<<q.z<<endl;
+                 stage3 << r.x <<" "<<r.y <<" "<<r.z<<endl;
+                 stage3 << s.x <<" "<<s.y <<" "<<s.z<<endl;
+
+                 stage3 <<endl;
+
+            }
 
         }
 
