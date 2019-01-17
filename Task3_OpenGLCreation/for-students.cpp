@@ -330,6 +330,40 @@ bool comp(const homogeneous_point& lhs, const homogeneous_point& rhs)
   return lhs.y > rhs.y;
 }
 
+homogeneous_point mapped(homogeneous_point p){
+    double maxY=p.y;
+    maxY=(maxY+1)*(screen_y/2);
+    p.y=maxY;
+
+    double maxX=p.x;
+    maxX=(maxX+1)*(screen_x/2);
+
+    p.x=maxX;
+
+    return p;
+}
+
+homogeneous_point pointKnownY(homogeneous_point p3,homogeneous_point p2, double y){
+    homogeneous_point ans;
+    ans.w=1;
+    ans.y=y;
+    ans.x=p2.x + ((p3.x-p2.x)/(p3.y-p2.y))*(y-p2.y);
+    ans.z=p2.z + ((p3.z-p2.z)/(p3.y-p2.y))*(y-p2.y);
+    //ans.print();
+    return ans;
+}
+
+
+int toint(double awm){
+    int x=int(awm);
+    double prec=awm-x;
+    if(prec >0.5){
+        return x+1;
+    }
+    else return x;
+
+}
+
 void scan_convert() {
     ifstream stage3;
     stage3.open("stage3.txt");
@@ -362,28 +396,59 @@ void scan_convert() {
 
         if(cnt%3==0){
 
-
+            int x,y;
             std::sort(std::begin(Points), std::end(Points), comp);
             for(int i=0;i<3;i++){
 
-                    double maxY=Points[i].y;
-                    maxY=(maxY+1)*(screen_y/2);
+                    Points[i]=mapped(Points[i]);
+                    //Points[i].print();
+                    x=toint(Points[i].x);
+                    y=screen_y-(toint(Points[i].y));
 
-                    double maxX=Points[i].x;
-                    maxX=(maxX+1)*(screen_x/2);
+                    if(zs[x][y] >Points[i].z){
+                        zs[x][y]=Points[i].z;
+                        pixels[x][y]=finalclrs[ic];
 
-                    cout<<maxX<<" "<<maxY<<endl;
+                    }
 
-
-                    pixels[(int)maxX][screen_y-(int)maxY]=finalclrs[ic];
 
             }
-                cout<<endl;
+            cout<<endl;
+
+            int maxY=toint(Points[0].y);
+            int minY=toint(Points[2].y);
+
+            for(int ys=maxY-1; ys>minY; ys--){
+
+                homogeneous_point xa= pointKnownY(Points[0],Points[2],ys);
+                x=toint(xa.x);
+                y=screen_y-(toint(xa.y));
+
+                if(zs[x][y] >xa.z){
+                    zs[x][y]=xa.z;
+                    pixels[x][y]=finalclrs[ic];
+                }
+                pixels[toint(xa.x)][screen_y-toint(xa.y)]=finalclrs[ic];
+                homogeneous_point xb;
+                if(ys<(int)Points[1].y){
+                    xb= pointKnownY(Points[1],Points[2],ys);
+                }
+                else{
+                    xb= pointKnownY(Points[0],Points[1],ys);
+                }
+
+                x=toint(xb.x);
+                y=screen_y-(toint(xb.y));
+
+                if(zs[x][y] >xb.z){
+                    zs[x][y]=xb.z;
+                    pixels[x][y]=finalclrs[ic];
+                }
 
 
-            //double minY=Points[2].y;
-            //minY=(minY+1)*(screen_y/2);
-            //cout <<"maxY= "<<maxY<< " MinY= "<<minY<<endl;
+            }
+
+
 
 
 
