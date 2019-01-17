@@ -404,7 +404,6 @@ void scan_convert() {
                     //Points[i].print();
                     x=toint(Points[i].x);
                     y=screen_y-(toint(Points[i].y));
-
                     if(zs[x][y] >Points[i].z){
                         zs[x][y]=Points[i].z;
                         pixels[x][y]=finalclrs[ic];

@@ -1,0 +1,31 @@
+#include "bitmap_image.hpp"
+
+bitmap_image b_img ("texture.bmp");
+
+class Color {
+public:
+    double r, g, b;
+    Color(double r, double g, double b) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+    Color() {
+    }
+};
+
+Color **textureBuffer;
+int height, width;
+
+height = b_img.height();
+width = b_img.width();
+textureBuffer = new Color* [width];
+for (int i = 0; i < width; i++) {
+    textureBuffer[i] = new Color [height];
+    for (int j = 0; j < height; j++) {
+        unsigned char r, g, b;
+        b_img.get_pixel(i, j, r, g, b);
+        Color c(r/255.0, g/255.0, b/255.0);
+        textureBuffer[i][j] = c;
+    }
+}
