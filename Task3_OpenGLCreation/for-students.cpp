@@ -413,45 +413,59 @@ void scan_convert() {
 
 
             }
-            cout<<endl;
+
 
             int maxY=toint(Points[0].y);
             int minY=toint(Points[2].y);
 
             for(int ys=maxY-1; ys>minY; ys--){
-
+                int xs,xe;
                 homogeneous_point xa= pointKnownY(Points[0],Points[2],ys);
-                x=toint(xa.x);
+                xs=toint(xa.x);
                 y=screen_y-(toint(xa.y));
 
-                if(zs[x][y] >xa.z){
-                    zs[x][y]=xa.z;
-                    pixels[x][y]=finalclrs[ic];
+                if(zs[xs][y] >xa.z){
+                    zs[xs][y]=xa.z;
+                    pixels[xs][y]=finalclrs[ic];
                 }
-                pixels[toint(xa.x)][screen_y-toint(xa.y)]=finalclrs[ic];
+
                 homogeneous_point xb;
-                if(ys<(int)Points[1].y){
+                if(ys<toint(Points[1].y)){
                     xb= pointKnownY(Points[1],Points[2],ys);
                 }
                 else{
                     xb= pointKnownY(Points[0],Points[1],ys);
+                    //cout<<"ok"<<endl;
                 }
 
-                x=toint(xb.x);
+                xe=toint(xb.x);
                 y=screen_y-(toint(xb.y));
 
-                if(zs[x][y] >xb.z){
-                    zs[x][y]=xb.z;
-                    pixels[x][y]=finalclrs[ic];
+                if(zs[xe][y] >xb.z){
+                    zs[xe][y]=xb.z;
+                    pixels[xe][y]=finalclrs[ic];
+                }
+                //cout<<xs+1<<" xe="<<xe<<endl;
+                int xpp,xee;
+                if(xs<xe) {
+                        xpp=xs+1;
+                        xee=xe;
+                }
+                else{
+                  xpp=xe+1;
+                  xee=xs;
+                }
+                for(int xp=xpp; xp<xee; xp++){
+
+                    double zp=xa.z+ ((xb.z-xa.z)/(xb.x-xa.x))*(xp-xa.x);
+                    if(zs[xp][y]>zp){
+                           // cout<<"okay"<<endl;
+                    zs[xp][y]=zp;
+                    pixels[xp][y]=finalclrs[ic];
+                    }
                 }
 
-
             }
-
-
-
-
-
 
 
             cnt=0;
@@ -460,6 +474,7 @@ void scan_convert() {
 
         cnt++;
     }
+
 
 
     // the following code generates a bmp image. do not change this.
@@ -472,6 +487,8 @@ void scan_convert() {
     image.save_image("out.bmp");
 
     // free the dynamically allocated memory
+    delete[] pixels;
+    delete[] zs;
 
 }
 
