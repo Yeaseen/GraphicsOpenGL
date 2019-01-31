@@ -1,9 +1,12 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
-
+#include <iostream>
+#include <fstream>
+#include <cassert>
+#include <iomanip>
+#include <cmath>
+#include <vector>
 #include <windows.h>
 #include <glut.h>
+using namespace std;
 
 #define pi (2*acos(0.0))
 
@@ -11,6 +14,9 @@
 #define nCos cos(-pi/90)
 #define pSin sin(pi/90)
 #define nSin sin(-pi/90)
+
+
+
 class Point
 {
 public:
@@ -57,6 +63,104 @@ public:
     }
 };
 
+class color {
+public:
+    double r, g, b;
+    color(double r, double g, double b) {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+    color() {
+    }
+
+};
+
+class colorcomponents{
+public:
+    double ambient, diffuse, specular, reflectance;
+    colorcomponents(double a, double d, double s, double r){
+        this->ambient=a;
+        this->diffuse=d;
+        this->specular=s;
+        this->reflectance=r;
+    }
+    colorcomponents(){
+    }
+};
+
+class Primitives {
+public:
+
+
+    Point ref_point;
+    color clr;
+    colorcomponents coefficients;
+    string name;
+    int shine;
+
+
+    virtual void draw() = 0;
+
+    void setColor(color in) {
+        this->clr=in;
+    }
+
+    void setShine(int shine) {
+        this->shine = shine;
+    }
+
+     void setCoEfficients(colorcomponents inc) {
+        this->coefficients = inc;
+    }
+};
+
+class CheckerBoard:public Primitives{
+public:
+
+    double width, length;
+
+    CheckerBoard(string name, double flrWidth, double tileWidth){
+        this->name = name;
+        ref_point= Point(-flrWidth/2, -flrWidth/2, 0);
+        width=flrWidth;
+        length=tileWidth;
+    }
+
+    void draw() {
+
+        int numOfTiles = 2.0*width/length;// floorWidth/length
+
+        for (int i=0; i<numOfTiles; i++) {
+            for (int j=0; j<numOfTiles; j++) {
+
+                if ((i+j)%2 == 1) {
+                    glColor3f(0, 0, 0);
+                } else {
+                    glColor3f(1, 1, 1);
+                }
+
+                glBegin(GL_QUADS);
+                {
+                    glVertex3f(ref_point.x+length*i, ref_point.y+length*j,0);
+                    glVertex3f(ref_point.x+length*(i+1), ref_point.y+length*j, 0);
+                    glVertex3f(ref_point.x+length*(i+1), ref_point.y+length*(j+1), 0);
+                    glVertex3f(ref_point.x+length*i, ref_point.y+length*(j+1), 0);
+                }
+                glEnd();
+            }
+        }
+    }
+
+
+
+
+};
+
+
+
+
+
 Point pos(0, -100, 10);
 Point u(0,0,1);
 Point r(1, 0, 0);
@@ -65,69 +169,38 @@ Point temp(0,0,0);
 int drawgrid;
 int drawaxes;
 double tempVal;
+double Near,Far,fovY,aspect_ratio;
+
+int reccLevel;
+int imageWidth;
+int imageHeight;
+
+vector<Primitives*>  objects;
 
 
 
-void drawAxes()
-{
-	if(drawaxes==1)
-	{
-		glColor3f(1.0, 1.0, 1.0);
-		glBegin(GL_LINES);{
-			glVertex3f( 100,0,0);
-			glVertex3f(-100,0,0);
+void readData(){
 
-			glVertex3f(0,-100,0);
-			glVertex3f(0, 100,0);
+    ifstream description;
+    description.open("description.txt");
+    description>> Near >> Far >> fovY >> aspect_ratio >> reccLevel >> imageWidth;
+    imageHeight=imageWidth;
 
-			glVertex3f(0,0, 100);
-			glVertex3f(0,0,-100);
-		}glEnd();
-	}
+    Primitives* instance;
+    double boardtile;
+    description>> boardtile;
+    colorcomponents board;
+    description>> board.ambient >> board.diffuse>> board.reflectance;
+    board.specular=0.0;
+    instance=new CheckerBoard("Board",1000, boardtile);
+    instance->setCoEfficients(board);
+    instance->setShine(1);
+    objects.push_back(instance);
+
+    description.close();
 }
 
-
-void drawGrid()
-{
-	int i;
-	if(drawgrid==1)
-	{
-		glColor3f(0.6, 0.6, 0.6);	//grey
-		glBegin(GL_LINES);{
-			for(i=-8;i<=8;i++){
-
-				if(i==0)
-					continue;	//SKIP the MAIN axes
-
-				//lines parallel to Y-axis
-				glVertex3f(i*10, -90, 0);
-				glVertex3f(i*10,  90, 0);
-
-				//lines parallel to X-axis
-				glVertex3f(-90, i*10, 0);
-				glVertex3f( 90, i*10, 0);
-			}
-		}glEnd();
-	}
-}
-
-void drawSquare(double a)
-{
-    //glColor3f(1.0,0.0,0.0);
-	glBegin(GL_QUADS);{
-		glVertex3f( a, a,2);
-		glVertex3f( a,-a,2);
-		glVertex3f(-a,-a,2);
-		glVertex3f(-a, a,2);
-	}glEnd();
-}
-
-
-
-void keyboardListener(unsigned char key, int x,int y){
-	switch(key){
-
-		case '1':
+void press1(){
             temp.x = l.x*pCos - r.x*pSin;
             temp.y = l.y*pCos - r.y*pSin;
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
@@ -141,10 +214,9 @@ void keyboardListener(unsigned char key, int x,int y){
             r.y /= tempVal;
             l.x = temp.x;
             l.y = temp.y;
-			break;
+}
 
-        case '2':
-
+void press2(){
             temp.x = l.x*nCos - r.x*nSin;
             temp.y = l.y*nCos - r.y*nSin;
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
@@ -158,8 +230,9 @@ void keyboardListener(unsigned char key, int x,int y){
             r.y /= tempVal;
             l.x = temp.x;
             l.y = temp.y;
-			break;
-        case '3':
+}
+
+void press3(){
             temp.x = l.x*pCos + u.x*pSin;
             temp.y = l.y*pCos + u.y*pSin;
             temp.z = l.z*pCos + u.z*pSin;
@@ -179,8 +252,9 @@ void keyboardListener(unsigned char key, int x,int y){
             l.y = temp.y;
             l.z = temp.z;
 
-			break;
-        case '4':
+}
+
+void press4(){
             temp.x = l.x*nCos + u.x*nSin;
             temp.y = l.y*nCos + u.y*nSin;
             temp.z = l.z*nCos + u.z*nSin;
@@ -199,9 +273,9 @@ void keyboardListener(unsigned char key, int x,int y){
             l.x = temp.x;
             l.y = temp.y;
             l.z = temp.z;
+}
 
-			break;
-        case '5':
+void press5(){
             temp.x = r.x*pCos - u.x*pSin;
             temp.y = r.y*pCos - u.y*pSin;
             temp.z = r.z*pCos - u.z*pSin;
@@ -220,8 +294,10 @@ void keyboardListener(unsigned char key, int x,int y){
             r.x = temp.x;
             r.y = temp.y;
             r.z = temp.z;
-			break;
-        case '6':
+}
+
+void press6(){
+
             temp.x = r.x*nCos - u.x*nSin;
             temp.y = r.y*nCos - u.y*nSin;
             temp.z = r.z*nCos - u.z*nSin;
@@ -241,7 +317,61 @@ void keyboardListener(unsigned char key, int x,int y){
             r.x = temp.x;
             r.y = temp.y;
             r.z = temp.z;
+}
 
+
+
+void drawAxes()
+{
+	if(drawaxes==1)
+	{
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);{
+			glVertex3f( 100,0,0);
+			glVertex3f(-100,0,0);
+
+			glVertex3f(0,-100,0);
+			glVertex3f(0, 100,0);
+
+			glVertex3f(0,0, 100);
+			glVertex3f(0,0,-100);
+		}glEnd();
+	}
+}
+
+
+void drawSquare(double a)
+{
+    //glColor3f(1.0,0.0,0.0);
+	glBegin(GL_QUADS);{
+		glVertex3f( a, a,2);
+		glVertex3f( a,-a,2);
+		glVertex3f(-a,-a,2);
+		glVertex3f(-a, a,2);
+	}glEnd();
+}
+
+
+
+void keyboardListener(unsigned char key, int x,int y){
+	switch(key){
+		case '1':
+            press1();
+			break;
+        case '2':
+            press2();
+			break;
+        case '3':
+            press3();
+			break;
+        case '4':
+            press4();
+			break;
+        case '5':
+            press5();
+			break;
+        case '6':
+            press6();
 			break;
 		default:
 			break;
@@ -254,13 +384,11 @@ void specialKeyListener(int key, int x,int y){
 		case GLUT_KEY_DOWN:		//down arrow key
 			pos.x -= 2.0*l.x;
 			pos.y -= 2.0*l.y;
-
 			break;
 		case GLUT_KEY_UP:		// up arrow key
 			pos.x += 2.0*l.x;
 			pos.y += 2.0*l.y;
 			break;
-
 		case GLUT_KEY_RIGHT:
 			pos.x += 2.0*r.x;
 			pos.y += 2.0*r.y;
@@ -269,17 +397,14 @@ void specialKeyListener(int key, int x,int y){
 			pos.x -= 2.0*r.x;
 			pos.y -= 2.0*r.y;
 			break;
-
 		case GLUT_KEY_PAGE_UP:
 		    pos.z += 2.0;
 			break;
 		case GLUT_KEY_PAGE_DOWN:
 		    pos.z -= 2.0;
 			break;
-
 		case GLUT_KEY_INSERT:
 			break;
-
 		case GLUT_KEY_HOME:
            /* squareLength = (squareLength/2) > 0? squareLength-2:squareLength;
             circleRadius = circleRadius < 19? circleRadius+1:circleRadius;*/
@@ -288,8 +413,6 @@ void specialKeyListener(int key, int x,int y){
 		    /*squareLength = (squareLength/2) < 16? squareLength+2:squareLength;
             circleRadius = circleRadius > 0? circleRadius-1:circleRadius;*/
 			break;
-
-
 		default:
 			break;
 	}
@@ -302,15 +425,12 @@ void mouseListener(int button, int state, int x, int y){	//x, y is the x-y of th
 				drawaxes=1-drawaxes;
 			}
 			break;
-
 		case GLUT_RIGHT_BUTTON:
 			//........
 			break;
-
 		case GLUT_MIDDLE_BUTTON:
 			//........
 			break;
-
 		default:
 			break;
 	}
@@ -354,8 +474,29 @@ void display(){
 	//add objects
 
 	drawAxes();
+	for (int i=0; i < objects.size(); i++) {
+        objects[i]->draw();
+    }
 
 
+    glTranslatef(0,0,20);
+    glBegin(GL_TRIANGLES);{
+        glVertex3f(0,0,30);
+        glVertex3f(15,-15,0);
+        glVertex3f(-15,-15,0);
+
+        glVertex3f(0,0,30);
+        glVertex3f(-15,15,0);
+        glVertex3f(-15,-15,0);
+
+        glVertex3f(0,0,30);
+        glVertex3f(-15,15,0);
+        glVertex3f(15,15,0);
+
+        glVertex3f(0,0,30);
+        glVertex3f(15,15,0);
+        glVertex3f(15,-15,0);
+    }glEnd();
 
 
 
@@ -391,7 +532,7 @@ void init(){
 	glLoadIdentity();
 
 	//give PERSPECTIVE parameters
-	gluPerspective(80,	1,	1,	1000.0);
+	gluPerspective(fovY,	aspect_ratio,	Near, Far);
 	//field of view in the Y (vertically)
 	//aspect ratio that determines the field of view in the X direction (horizontally)
 	//near distance
@@ -399,6 +540,7 @@ void init(){
 }
 
 int main(int argc, char **argv){
+    readData();
 	glutInit(&argc,argv);
 	glutInitWindowSize(500, 500);
 	glutInitWindowPosition(0, 0);

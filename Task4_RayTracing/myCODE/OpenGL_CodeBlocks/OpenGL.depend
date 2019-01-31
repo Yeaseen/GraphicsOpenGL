@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1548911136 source:f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\main.cpp
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
