@@ -1,19 +1,22 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <algorithm>
 #include <iomanip>
 #include <cmath>
 #include <vector>
 #include <windows.h>
 #include <glut.h>
+#include "bitmap_image.hpp"
 using namespace std;
 
+#define eps 0.00001
+#define WINDOW_WIDTH 500.0
+#define WINDOW_HEIGHT 500.0
 #define pi (2*acos(0.0))
 
-#define pCos cos(pi/90)
-#define nCos cos(-pi/90)
-#define pSin sin(pi/90)
-#define nSin sin(-pi/90)
+#define MAX_VAL 9999999
+#define MIN_VAL -9999999
 
 
 
@@ -61,6 +64,10 @@ public:
     Point normalize() {
         return *this / sqrt(x*x + y*y + z*z);
     }
+
+
+
+
 };
 
 class color {
@@ -101,6 +108,7 @@ public:
 
 
     virtual void draw() = 0;
+    virtual double intersect_t(Point ray_start,Point ray_dir) =0;
 
     void setColor(color in) {
         this->clr=in;
@@ -122,15 +130,16 @@ public:
 
     CheckerBoard(string name, double flrWidth, double tileWidth){
         this->name = name;
-        ref_point= Point(-flrWidth/2, -flrWidth/2, 0);
         width=flrWidth;
         length=tileWidth;
+        ref_point= Point(-flrWidth/2, -flrWidth/2, 0);
+
     }
 
     void draw() {
 
-        int numOfTiles = 2.0*width/length;// floorWidth/length
-
+        //int numOfTiles = 2.0*width/length;
+        int numOfTiles = abs(ref_point.x*2/length);
         for (int i=0; i<numOfTiles; i++) {
             for (int j=0; j<numOfTiles; j++) {
 
@@ -152,12 +161,252 @@ public:
         }
     }
 
+    Point getNormal(){
+        return Point(0,0,1);
+    }
+
+
+    double intersect_t(Point ray_start,Point ray_dir){
+      ray_dir.normalize();
+      Point normal = this->getNormal();
+      double t = ((-1.0) * ray_start.dot(normal))/ normal.dot(ray_dir);
+
+      //double t= solveIntersectionT(ray_start,ray_dir);
+
+      Point intsec=ray_start+ ray_dir*t;
+      intsec.z=0;
+
+      double xmin,xmax,ymin,ymax;
+      xmin=ref_point.x;
+      xmax=xmin * (-1);
+
+      ymin=ref_point.y;
+      ymax=ymin * (-1);
+
+      if (xmin > intsec.x || intsec.x > xmax || ymin > intsec.y || intsec.y > ymax ) {
+            return -1;
+      }
+
+      int xc=(intsec.x - this->ref_point.x)/ length;
+      int yc=(intsec.y - this->ref_point.y)/ length;
+
+      if((xc+yc)%2==1){
+        this->setColor(color(0,0,0));
+      }
+      else {
+        this->setColor(color(1,1,1));
+      }
+      return t;
+    }
 
 
 
 };
 
+class Pyramid:public Primitives{
+public:
+    double width,height;
+    Point p1,p2,p3,p4,p5;
 
+    Pyramid(string name,Point p,double w, double h){
+        this->name=name;
+        ref_point=p;
+        width=w;
+        height=h;
+        this->p1=Point(ref_point.x,ref_point.y,ref_point.z+height);
+
+        this->p2=Point(ref_point.x-width/2,ref_point.y-width/2,ref_point.z);
+
+        this->p3=Point(ref_point.x+width/2,ref_point.y-width/2,ref_point.z);
+
+
+        this->p4=Point(ref_point.x+width/2,ref_point.y+width/2,ref_point.z);
+
+        this->p5=Point(ref_point.x-width/2,ref_point.y+width/2,ref_point.z);
+
+
+
+    }
+
+    void draw(){
+
+    glColor3f(clr.r,clr.g,clr.b);
+        glPushMatrix();
+    {
+    //glTranslatef(ref_point.x,ref_point.y,ref_point.z);
+    glBegin(GL_QUADS);{
+        glVertex3f(ref_point.x-width/2,ref_point.y-width/2,ref_point.z);
+        glVertex3f(ref_point.x+width/2,ref_point.y-width/2,ref_point.z);
+        glVertex3f(ref_point.x+width/2,ref_point.y+width/2,ref_point.z);
+        glVertex3f(ref_point.x-width/2,ref_point.y+width/2,ref_point.z);
+
+        //p2,p3,p4
+
+        //p3,p4,p5
+    }glEnd();
+
+    glBegin(GL_TRIANGLES);{
+        //p1,p2,p3
+        glVertex3f(ref_point.x,ref_point.y,ref_point.z+height);
+        glVertex3f(ref_point.x-width/2,ref_point.y-width/2,ref_point.z);
+        glVertex3f(ref_point.x+width/2,ref_point.y-width/2,ref_point.z);
+
+        //p1,p3,p4
+        glVertex3f(ref_point.x,ref_point.y,ref_point.z+height);
+        glVertex3f(ref_point.x+width/2,ref_point.y-width/2,ref_point.z);
+        glVertex3f(ref_point.x+width/2,ref_point.y+width/2,ref_point.z);
+
+        //p1,p5,p4
+        glVertex3f(ref_point.x,ref_point.y,ref_point.z+height);
+        glVertex3f(ref_point.x-width/2,ref_point.y+width/2,ref_point.z);
+        glVertex3f(ref_point.x+width/2,ref_point.y+width/2,ref_point.z);
+
+        //p1,p2,p5
+        glVertex3f(ref_point.x,ref_point.y,ref_point.z+height);
+        glVertex3f(ref_point.x-width/2,ref_point.y+width/2,ref_point.z);
+        glVertex3f(ref_point.x-width/2,ref_point.y-width/2,ref_point.z);
+    }glEnd();
+    }
+    glPopMatrix();
+
+
+    }
+
+
+    double getDET(Point e1, Point e2, Point e3){
+        return e1.x*(e2.y*e3.z - e2.z*e3.y) - e1.y*(e2.x*e3.z - e2.z*e3.x) + e1.z*(e2.x*e3.y - e2.y*e3.x);
+    }
+
+    double getsolveOne(Point ray_start, Point ray_dir, Point pp1, Point pp2, Point pp3){
+
+        Point edge1 = pp1 - pp2;
+        Point edge2 = pp1 - pp3;
+        double det = this->getDET(edge1, edge2, ray_dir);
+        if(det > -eps && det < eps) return -1;
+
+        Point temp = pp1 - ray_start;
+        double beta = this->getDET(temp, edge2, ray_dir)/det;
+        double gamma = this->getDET(edge1, temp, ray_dir)/det;
+        if(beta < 0 || gamma < 0 || beta+gamma > 1) return -1;
+        double t = this->getDET(edge1, edge2, temp)/det;
+        if(t<=0) return -1;
+        else return t;
+
+    }
+
+    double intersect_t(Point ray_start,Point ray_dir){
+        ray_dir.normalize();
+        vector<double> solves;
+
+        double t1=getsolveOne(ray_start,ray_dir,p1,p2,p3);
+        if(t1>0) solves.push_back(t1);
+        double t2=getsolveOne(ray_start,ray_dir,p1,p3,p4);
+        if(t2>0) solves.push_back(t2);
+        double t3=getsolveOne(ray_start,ray_dir,p1,p5,p4);
+        if(t3>0) solves.push_back(t3);
+        double t4=getsolveOne(ray_start,ray_dir,p1,p2,p5);
+        if(t4>0) solves.push_back(t4);
+        double t5=getsolveOne(ray_start,ray_dir,p2,p3,p4);
+        if(t5>0) solves.push_back(t5);
+        double t6=getsolveOne(ray_start,ray_dir,p3,p4,p5);
+        if(t6>0) solves.push_back(t6);
+
+        if(solves.size()==0){
+            return -1;
+        }
+        else{
+            sort(solves.begin(), solves.end());
+            return solves[0];
+        }
+    }
+};
+
+void drawSphere(double radius,int slices,int stacks)
+{
+	Point points[100][100];
+	int i,j;
+	double h,r;
+	//generate points
+	for(i=0;i<=stacks;i++)
+	{
+		h=radius*sin(((double)i/(double)stacks)*(pi/2));
+		r=radius*cos(((double)i/(double)stacks)*(pi/2));
+		for(j=0;j<=slices;j++)
+		{
+			points[i][j].x=r*cos(((double)j/(double)slices)*2*pi);
+			points[i][j].y=r*sin(((double)j/(double)slices)*2*pi);
+			points[i][j].z=h;
+		}
+	}
+	//draw quads using generated points
+	for(i=0;i<stacks;i++)
+	{
+
+		for(j=0;j<slices;j++)
+		{
+			glBegin(GL_QUADS);{
+			    //upper hemisphere
+				glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
+				glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
+				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
+				glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
+                //lower hemisphere
+                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
+				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
+				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
+				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
+			}glEnd();
+		}
+	}
+}
+
+
+class Sphere:public Primitives{
+public:
+    double radius;
+    Sphere(string name, Point c, double r){
+        this->name=name;
+        ref_point=c;
+        radius=r;
+    }
+
+    void draw(){
+
+
+    glColor3f(clr.r,clr.g,clr.b);
+        glPushMatrix();
+    {
+    glTranslatef(ref_point.x,ref_point.y,ref_point.z);
+
+    drawSphere(radius,24,20);
+    }
+    glPopMatrix();
+
+
+
+    }
+
+    double intersect_t(Point ray_start,Point ray_dir){
+        ray_dir=ray_dir.normalize();
+        Point R0 = ray_start - ref_point;
+        double a,b,c,d;
+        a=1;
+        b=2* R0.dot(ray_dir);
+        c= R0.dot(R0) - radius*radius;
+
+        d = b*b - 4*c;
+
+        if(d < 0) return -1;
+        double t1 = (-b + sqrt(d))/(2.0);
+        double t2 = (-b - sqrt(d))/(2.0);
+        double t = t1<t2?t1:t2;
+        return t;
+    }
+
+
+
+
+};
 
 
 
@@ -197,18 +446,137 @@ void readData(){
     instance->setShine(1);
     objects.push_back(instance);
 
+    int numObj;
+    description>> numObj;
+
+    color it;
+    colorcomponents co;
+    int sh;
+    for(int i=0; i<numObj; i++){
+        string type;
+        description>>type;
+        if(type == "pyramid"){
+            Point lowest;
+            description>> lowest.x>> lowest.y>>lowest.z;
+            double width, height;
+            description>> width >> height;
+
+            description>> it.r >> it.g >>it.b;
+
+            description>>co.ambient>>co.diffuse>>co.specular>>co.reflectance;
+
+            description>>sh;
+
+            instance= new Pyramid(type,lowest,width,height);
+            instance->setColor(it);
+            instance->setCoEfficients(co);
+            instance->setShine(sh);
+
+        }
+        else if(type== "sphere"){
+
+            Point center;
+            description>>center.x>>center.y>>center.z;
+            double rad;
+            description>>rad;
+            description>> it.r >> it.g >>it.b;
+
+            description>>co.ambient>>co.diffuse>>co.specular>>co.reflectance;
+
+            description>>sh;
+
+            instance=new Sphere(type,center,rad);
+            instance->setColor(it);
+            instance->setCoEfficients(co);
+            instance->setShine(sh);
+
+
+        }
+
+        objects.push_back(instance);
+
+
+
+    }
+
+
     description.close();
 }
 
+
+void click(){
+    cout<<objects.size()<<endl;
+    Point midPoint = pos + l * Near;
+    double fov_y=fovY*(pi/180);
+    double fov_x=fov_y * aspect_ratio;
+    double h_pix = Near * tan(fov_y/2);
+    double w_pix = Near * tan(fov_x/2);
+
+    Point** pointBuffer = new Point*[imageWidth];
+    int init= imageHeight / 2;
+
+    for(int i = -init; i < (imageHeight + 1) / 2; i++){
+        pointBuffer[i + init] = new Point [imageHeight];
+        for(int j = -init; j < (imageHeight + 1) / 2; j++){
+        pointBuffer[i + init][j + init] = midPoint + r * (i / (imageHeight / 2.0)) * w_pix - u * (j / (imageHeight / 2.0)) * h_pix;
+        }
+    }
+
+    color** imageBuffer = new color*[imageWidth];
+    for(int i = 0; i < imageHeight; i++){
+
+         imageBuffer[i] = new color [imageHeight];
+        for(int j = 0; j < imageHeight; j++){
+            double t = MAX_VAL;
+            int selectedObject = -1;
+            for(int k = 0; k < objects.size(); k++){
+                double temp = objects[k]->intersect_t(pointBuffer[i][j], pointBuffer[i][j] - pos);
+
+                if(t > temp && temp > 0){
+                    t = temp;
+                    selectedObject = k;
+                }
+            }
+            if(selectedObject >= 0){
+                //Vector v = pointBuffer[i][j] - pos;
+                //v.normalize();
+                //v = pointBuffer[i][j] + v * t;
+                imageBuffer[i][j] = objects[selectedObject]->clr;//getColor(v, pointBuffer[i][j], selectedObject, 3);
+            }
+
+            else imageBuffer[i][j] = color(0, 0, 0);
+
+        }
+    }
+
+    bitmap_image image(imageHeight, imageHeight);
+    for (int x = 0; x < imageHeight; x++) {
+        for (int y = 0; y < imageHeight; y++) {
+            imageBuffer[x][y].r = (imageBuffer[x][y].r > 1) ? 1 : imageBuffer[x][y].r;
+            imageBuffer[x][y].g = (imageBuffer[x][y].g > 1) ? 1 : imageBuffer[x][y].g;
+            imageBuffer[x][y].b = (imageBuffer[x][y].b > 1) ? 1 : imageBuffer[x][y].b;
+            image.set_pixel(x, y, imageBuffer[x][y].r * 255, imageBuffer[x][y].g * 255, imageBuffer[x][y].b * 255);
+        }
+    }
+    image.save_image("out.bmp");
+
+    delete[] pointBuffer;
+    delete[] imageBuffer;
+
+}
+
+
+
+
 void press1(){
-            temp.x = l.x*pCos - r.x*pSin;
-            temp.y = l.y*pCos - r.y*pSin;
+            temp.x = l.x*cos(pi/90) - r.x*sin(pi/90);
+            temp.y = l.y*cos(pi/90) - r.y*sin(pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
 
-            r.x = r.x*pCos + l.x*pSin;
-            r.y = r.y*pCos + l.y*pSin;
+            r.x = r.x*cos(pi/90) + l.x*sin(pi/90);
+            r.y = r.y*cos(pi/90) + l.y*sin(pi/90);
             tempVal = sqrt(r.x*r.x + r.y*r.y + r.z*r.z);
             r.x /= tempVal;
             r.y /= tempVal;
@@ -217,14 +585,14 @@ void press1(){
 }
 
 void press2(){
-            temp.x = l.x*nCos - r.x*nSin;
-            temp.y = l.y*nCos - r.y*nSin;
+            temp.x = l.x*cos(-pi/90) - r.x*sin(-pi/90);
+            temp.y = l.y*cos(-pi/90) - r.y*sin(-pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
 
-            r.x = r.x*nCos + l.x*nSin;
-            r.y = r.y*nCos + l.y*nSin;
+            r.x = r.x*cos(-pi/90) + l.x*sin(-pi/90);
+            r.y = r.y*cos(-pi/90) + l.y*sin(-pi/90);
             tempVal = sqrt(r.x*r.x + r.y*r.y + r.z*r.z);
             r.x /= tempVal;
             r.y /= tempVal;
@@ -233,17 +601,17 @@ void press2(){
 }
 
 void press3(){
-            temp.x = l.x*pCos + u.x*pSin;
-            temp.y = l.y*pCos + u.y*pSin;
-            temp.z = l.z*pCos + u.z*pSin;
+            temp.x = l.x*cos(pi/90) + u.x*sin(pi/90);
+            temp.y = l.y*cos(pi/90) + u.y*sin(pi/90);
+            temp.z = l.z*cos(pi/90) + u.z*sin(pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
             temp.z /= tempVal;
 
-            u.x = u.x*pCos - l.x*pSin;
-            u.y = u.y*pCos - l.y*pSin;
-            u.z = u.z*pCos - l.z*pSin;
+            u.x = u.x*cos(pi/90) - l.x*sin(pi/90);
+            u.y = u.y*cos(pi/90) - l.y*sin(pi/90);
+            u.z = u.z*cos(pi/90) - l.z*sin(pi/90);
             tempVal = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
             u.x /= tempVal;
             u.y /= tempVal;
@@ -255,17 +623,17 @@ void press3(){
 }
 
 void press4(){
-            temp.x = l.x*nCos + u.x*nSin;
-            temp.y = l.y*nCos + u.y*nSin;
-            temp.z = l.z*nCos + u.z*nSin;
+            temp.x = l.x*cos(-pi/90) + u.x*sin(-pi/90);
+            temp.y = l.y*cos(-pi/90) + u.y*sin(-pi/90);
+            temp.z = l.z*cos(-pi/90) + u.z*sin(-pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
             temp.z /= tempVal;
 
-            u.x = u.x*nCos - l.x*nSin;
-            u.y = u.y*nCos - l.y*nSin;
-            u.z = u.z*nCos - l.z*nSin;
+            u.x = u.x*cos(-pi/90) - l.x*sin(-pi/90);
+            u.y = u.y*cos(-pi/90) - l.y*sin(-pi/90);
+            u.z = u.z*cos(-pi/90) - l.z*sin(-pi/90);
             tempVal = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
             u.x /= tempVal;
             u.y /= tempVal;
@@ -276,17 +644,17 @@ void press4(){
 }
 
 void press5(){
-            temp.x = r.x*pCos - u.x*pSin;
-            temp.y = r.y*pCos - u.y*pSin;
-            temp.z = r.z*pCos - u.z*pSin;
+            temp.x = r.x*cos(pi/90) - u.x*sin(pi/90);
+            temp.y = r.y*cos(pi/90) - u.y*sin(pi/90);
+            temp.z = r.z*cos(pi/90) - u.z*sin(pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
             temp.z /= tempVal;
 
-            u.x = u.x*pCos + r.x*pSin;
-            u.y = u.y*pCos + r.y*pSin;
-            u.z = u.z*pCos + r.z*pSin;
+            u.x = u.x*cos(pi/90) + r.x*sin(pi/90);
+            u.y = u.y*cos(pi/90) + r.y*sin(pi/90);
+            u.z = u.z*cos(pi/90) + r.z*sin(pi/90);
             tempVal = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
             u.x /= tempVal;
             u.y /= tempVal;
@@ -298,18 +666,18 @@ void press5(){
 
 void press6(){
 
-            temp.x = r.x*nCos - u.x*nSin;
-            temp.y = r.y*nCos - u.y*nSin;
-            temp.z = r.z*nCos - u.z*nSin;
+            temp.x = r.x*cos(-pi/90) - u.x*sin(-pi/90);
+            temp.y = r.y*cos(-pi/90) - u.y*sin(-pi/90);
+            temp.z = r.z*cos(-pi/90) - u.z*sin(-pi/90);
             tempVal = sqrt(temp.x*temp.x + temp.y*temp.y + temp.z*temp.z);
             temp.x /= tempVal;
             temp.y /= tempVal;
             temp.z /= tempVal;
 
 
-            u.x = u.x*nCos + r.x*nSin;
-            u.y = u.y*nCos + r.y*nSin;
-            u.z = u.z*nCos + r.z*nSin;
+            u.x = u.x*cos(-pi/90) + r.x*sin(-pi/90);
+            u.y = u.y*cos(-pi/90) + r.y*sin(-pi/90);
+            u.z = u.z*cos(-pi/90) + r.z*sin(-pi/90);
             tempVal = sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
             u.x /= tempVal;
             u.y /= tempVal;
@@ -355,11 +723,16 @@ void drawSquare(double a)
 
 void keyboardListener(unsigned char key, int x,int y){
 	switch(key){
+        case '0':
+            cout<<"rendering image"<<endl;
+            click();
+            cout<<"rendering done"<<endl;
+            break;
 		case '1':
-            press1();
+            press2();
 			break;
         case '2':
-            press2();
+            press1();
 			break;
         case '3':
             press3();
@@ -479,24 +852,6 @@ void display(){
     }
 
 
-    glTranslatef(0,0,20);
-    glBegin(GL_TRIANGLES);{
-        glVertex3f(0,0,30);
-        glVertex3f(15,-15,0);
-        glVertex3f(-15,-15,0);
-
-        glVertex3f(0,0,30);
-        glVertex3f(-15,15,0);
-        glVertex3f(-15,-15,0);
-
-        glVertex3f(0,0,30);
-        glVertex3f(-15,15,0);
-        glVertex3f(15,15,0);
-
-        glVertex3f(0,0,30);
-        glVertex3f(15,15,0);
-        glVertex3f(15,-15,0);
-    }glEnd();
 
 
 
@@ -542,7 +897,7 @@ void init(){
 int main(int argc, char **argv){
     readData();
 	glutInit(&argc,argv);
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutInitWindowPosition(0, 0);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);	//Depth, Double buffer, RGB color
 

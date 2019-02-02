@@ -1,13 +1,28 @@
 # depslib dependency file v1.0
-1548911136 source:f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\main.cpp
-	<stdio.h>
-	<stdlib.h>
-	<math.h>
+1549122072 source:f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
 	<windows.h>
 	<glut.h>
+	"bitmap_image.hpp"
 
 1392007564 f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\opengl\include\glut.h
 	<windows.h>
 	<GL/gl.h>
 	<GL/glu.h>
+
+1526315054 f:\graphicsopengl\task4_raytracing\mycode\opengl_codeblocks\bitmap_image.hpp
+	<algorithm>
+	<cmath>
+	<cstdlib>
+	<fstream>
+	<iostream>
+	<iterator>
+	<limits>
+	<string>
 
