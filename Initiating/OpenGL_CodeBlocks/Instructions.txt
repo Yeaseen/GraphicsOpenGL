@@ -1,0 +1,19 @@
+Camera is at negative Z-axis(0,0,-100) and looking to positive Z-axis. u is Y-axis, r is X-axis.
+
+
+
+If pressing any of these:
+1 - rotate/look left
+2 - rotate/look right
+3 - look up
+4 - look down
+5 - tilt clockwise
+6 - tilt counterclockwise
+
+
+up arrow - move forward
+down arrow - move backward
+right arrow - move right
+left arrow - move left
+PgUp - move up
+PgDn - move down

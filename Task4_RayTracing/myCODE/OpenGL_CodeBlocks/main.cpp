@@ -70,6 +70,15 @@ public:
 
 };
 
+class Lights{
+public:
+    Point position;
+    double falloff;
+    Lights(){
+    }
+};
+vector<Lights> lights;
+
 class color {
 public:
     double r, g, b;
@@ -96,6 +105,8 @@ public:
     }
 };
 
+class Primitives;
+vector<Primitives*>  objects;
 class Primitives {
 public:
 
@@ -109,7 +120,85 @@ public:
 
     virtual void draw() = 0;
     virtual double intersect_t(Point ray_start,Point ray_dir) =0;
+    virtual Point getNormal(Point intrr) =0;
+    Point getReflection(Point ray_dir, Point normal) {
+        Point reflection = ray_dir - normal * 2.0 * ray_dir.dot(normal);
+        return reflection.normalize();
+    }
 
+    color updatedColor(Point ray_start, Point dir,int level, int objid){
+
+        color res(0,0,0);
+
+        res.r+=clr.r*coefficients.ambient;
+        res.g+=clr.g*coefficients.ambient;
+        res.b+=clr.b*coefficients.ambient;
+        double to= intersect_t(ray_start,dir);
+        Point secting = ray_start+dir*to;
+        Point normal=getNormal(secting);
+        //Point reflectedL=getReflection(secting-ray_start,normal);
+        double lambert = 0, phong = 0;
+
+        for(int i=0;i<lights.size();i++){
+
+            Point dirtoLight=ray_start-lights[i].position;//-secting;
+            //double len = sqrt(dirtoLight.x*dirtoLight.x + dirtoLight.y*dirtoLight.y + dirtoLight.z*dirtoLight.z);
+            //dirtoLight = dirtoLight.normalize();
+
+            Point start = lights[i].position;
+               /*
+            bool flag=false;
+
+            for(int j=0;j<objects.size();j++){
+                double tt=objects[j]->intersect_t(start,dirtoLight);
+                //if(objects[j].name == "Board"){
+
+                //}
+                if(tt > 0 || abs(tt) > len) {
+                    continue;
+                }
+
+                flag = true;
+                break;
+            }
+*/
+
+
+            double t = MAX_VAL;
+            int selectedObject = -1;
+            for(int k = 0; k < objects.size(); k++){
+               double temp = objects[k]->intersect_t(start, dirtoLight);
+
+                if(t > temp && temp > 0){
+                    t = temp;
+                selectedObject = k;
+                }
+            }
+
+            //if(selectedObject==-1) cout<<"before lamvbert  "<<selectedObject<<endl;
+            if(selectedObject == objid){
+                Point dirr=lights[i].position -ray_start;
+                double lambert=dirtoLight.dot(normal);
+                //double phong= pow( reflectedL.dot(secting-ray_start), shine);
+
+                lambert = lambert > 0 ? lambert : 0;
+                //phong = phong > 0 ? phong : 0;
+
+                 res.g+=lambert*coefficients.diffuse*clr.g;
+                 //res.g+=phong*coefficients.specular*clr.g;
+
+                 res.b+=lambert*coefficients.diffuse*clr.b;
+                 //res.b+=phong*coefficients.specular*clr.b;
+
+                 res.r+=lambert*coefficients.diffuse*clr.r;
+                 //res.r+=phong*coefficients.specular*clr.r;
+            }
+
+        }
+
+        return res;
+
+    }
     void setColor(color in) {
         this->clr=in;
     }
@@ -161,14 +250,15 @@ public:
         }
     }
 
-    Point getNormal(){
+    Point getNormal(Point intrr){
         return Point(0,0,1);
     }
 
 
     double intersect_t(Point ray_start,Point ray_dir){
       ray_dir.normalize();
-      Point normal = this->getNormal();
+      Point ppp(0,0,0);
+      Point normal = this->getNormal(ppp);
       double t = ((-1.0) * ray_start.dot(normal))/ normal.dot(ray_dir);
 
       //double t= solveIntersectionT(ray_start,ray_dir);
@@ -270,6 +360,12 @@ public:
     glPopMatrix();
 
 
+    }
+
+    Point getNormal(Point intrr){
+        //
+    Point p(0,0,1);
+     return  p;
     }
 
 
@@ -385,6 +481,11 @@ public:
 
 
     }
+    Point getNormal(Point intt){
+        Point normal = intt - ref_point;
+        return normal.normalize();
+
+    }
 
     double intersect_t(Point ray_start,Point ray_dir){
         ray_dir=ray_dir.normalize();
@@ -402,6 +503,10 @@ public:
         double t = t1<t2?t1:t2;
         return t;
     }
+
+
+
+
 
 
 
@@ -424,7 +529,8 @@ int reccLevel;
 int imageWidth;
 int imageHeight;
 
-vector<Primitives*>  objects;
+
+
 
 
 
@@ -494,9 +600,13 @@ void readData(){
         }
 
         objects.push_back(instance);
+    }
+    description>>numObj;
+    for(int i=0;i<numObj;i++){
+        Lights l;
+        description>>l.position.x>>l.position.y>>l.position.z>>l.falloff;
 
-
-
+        lights.push_back(l);
     }
 
 
@@ -538,10 +648,10 @@ void click(){
                 }
             }
             if(selectedObject >= 0){
-                //Vector v = pointBuffer[i][j] - pos;
-                //v.normalize();
-                //v = pointBuffer[i][j] + v * t;
-                imageBuffer[i][j] = objects[selectedObject]->clr;//getColor(v, pointBuffer[i][j], selectedObject, 3);
+                Point v = pointBuffer[i][j] - pos;
+                v.normalize();
+                Point ins = pointBuffer[i][j] + v * t;
+                imageBuffer[i][j] = objects[selectedObject]->updatedColor(pointBuffer[i][j],pointBuffer[i][j] - pos,1,selectedObject);//clr;//getColor(v, pointBuffer[i][j], selectedObject, 3);
             }
 
             else imageBuffer[i][j] = color(0, 0, 0);
@@ -849,6 +959,17 @@ void display(){
 	drawAxes();
 	for (int i=0; i < objects.size(); i++) {
         objects[i]->draw();
+    }
+
+    for (int i=0;i<lights.size();i++){
+        glColor3f(1,1,1);
+        glPushMatrix();
+    {
+    glTranslatef(lights[i].position.x,lights[i].position.y,lights[i].position.z);
+
+    drawSphere(5,24,20);
+    }
+    glPopMatrix();
     }
 
 
