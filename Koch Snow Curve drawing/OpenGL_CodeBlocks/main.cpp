@@ -20,6 +20,8 @@ using namespace std;
 
 
 
+
+
 class Point
 {
 public:
@@ -60,22 +62,23 @@ public:
         return Point(x/pt, y/pt, z/pt);
     }
 
-
     Point normalize() {
         return *this / sqrt(x*x + y*y + z*z);
     }
 
-
-
-
 };
 
-Point pos(0, 0, -100);
+Point pos(0, 0, -150);
 Point u(0,1,0);
 Point r(1, 0, 0);
 Point l(0, 0, 1);
+
+
 Point temp(0,0,0);
+
 double tempVal;
+
+
 int drawaxes;
 
 
@@ -151,7 +154,7 @@ void drawAxes()
 {
 	if(drawaxes==1)
 	{
-		glColor3f(1.0, 0.0, 0.0);
+		glColor3f(1.0, 1.0, 1.0);
 		glBegin(GL_LINES);{
 			glVertex3f( 100,0,0);
 			glVertex3f(-100,0,0);
@@ -428,6 +431,49 @@ void mouseListener(int button, int state, int x, int y){	//x, y is the x-y of th
 
 
 
+
+
+void drawKoch(double x1, double y1, double x2, double y2, int it){
+    float angle = 60 * (pi/180);
+    double x3 = (2*x1+x2)/3;
+    double y3 = (2*y1+y2)/3;
+
+
+    double x4 = (x1+2*x2)/3;
+    double y4 = (y1+2*y2)/3;
+
+    double x = x3 + (x4 - x3)* cos(angle) + (y4 -y3)* sin(angle);
+    double y = y3 - (x4 - x3)* sin(angle) + (y4 -y3)* cos(angle);
+
+
+    if(it>0){
+        drawKoch(x1,y1,x3,y3,it-1);
+
+        drawKoch(x3,y3,x,y,it-1);
+
+        drawKoch(x,y,x4,y4,it-1);
+
+        drawKoch(x4,y4,x2,y2,it-1);
+    }
+    else{
+        glColor3f(1.0, 0, 0);
+		glBegin(GL_LINES);{
+			glVertex3f( x1,y1,0);
+			glVertex3f(x3,y3,0);
+
+			glVertex3f(x3,y3,0);
+			glVertex3f(x,y,0);
+
+			glVertex3f(x,y,0);
+			glVertex3f(x4,y4,0);
+
+			glVertex3f(x4,y4,0);
+			glVertex3f(x2,y2,0);
+		}glEnd();
+    }
+}
+
+
 void display(){
 
 	//clear the display
@@ -464,11 +510,9 @@ void display(){
 	//add objects
 
 	drawAxes();
-
-	glColor3f(1,0,0);
-    //drawSquare(20);
-
-    drawCircle(20,80);
+    drawKoch(50,0,0,100,2);
+    drawKoch(0,100,-50,0,2);
+    drawKoch(-50,0,50,0,2);
 
 
 	//ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
@@ -479,6 +523,8 @@ void display(){
 void animate(){
 
 	//codes for any changes in Models, Camera
+
+
 	glutPostRedisplay();
 }
 
@@ -486,8 +532,6 @@ void init(){
 	//codes for initialization
 
 	drawaxes=1;
-
-
 
 	//clear the screen
 	glClearColor(0,0,0,0);

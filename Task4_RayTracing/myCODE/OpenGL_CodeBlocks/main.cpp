@@ -65,10 +65,8 @@ public:
         return *this / sqrt(x*x + y*y + z*z);
     }
 
-
-
-
 };
+
 
 class Lights{
 public:
@@ -107,6 +105,7 @@ public:
 
 class Primitives;
 vector<Primitives*>  objects;
+
 class Primitives {
 public:
 
