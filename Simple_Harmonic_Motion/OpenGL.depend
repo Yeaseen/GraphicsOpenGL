@@ -1,0 +1,81 @@
+# depslib dependency file v1.0
+1560603678 source:f:\graphicsopengl\initiating\opengl_codeblocks\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\initiating\opengl_codeblocks\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1565037932 source:f:\seu\graphics\opengl_workspace\opengl_codeblocks_windows_users\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\seu\graphics\opengl_workspace\opengl_codeblocks_windows_users\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1565040950 source:f:\graphicsopengl\opengl_codeblocks_raw\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\opengl_codeblocks_raw\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1588453349 source:f:\graphicsopengl\opengl_codeblocks_raw - copy\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\opengl_codeblocks_raw - copy\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1588453349 source:f:\graphicsopengl\simple_harmonic_motion\main.cpp
+	<iostream>
+	<fstream>
+	<cassert>
+	<algorithm>
+	<iomanip>
+	<cmath>
+	<vector>
+	<windows.h>
+	<glut.h>
+
+1392007564 f:\graphicsopengl\simple_harmonic_motion\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
